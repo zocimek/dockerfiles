@@ -96,6 +96,22 @@ jobs:
             fd --version
           '
 
+      - name: Runtime test
+        run: |
+          docker run --detach --name cezar-runtime --read-only \
+            --tmpfs /tmp --tmpfs /home/cezar:uid=1000,gid=1000 \
+            --env CEZ_REMOTE=1 --env CEZ_TELEMETRY=0 --env CEZ_SECRETS_KEYCHAIN=0 \
+            --env CEZ_UPDATE_CHANNEL=development --publish 4321:4321 cezar:smoke
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4321/api/v1/health; then
+              docker rm -f cezar-runtime
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs cezar-runtime
+          exit 1
+
       - name: Push
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0

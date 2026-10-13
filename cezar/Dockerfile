@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
 FROM docker.io/library/docker:29.9.0-cli@sha256:1a4c7cb63513f349bdad01fcc6e0f3f2f67d37b9da86f14dc0d4a0942eecda00 AS docker-cli
+FROM docker.io/jdxcode/mise:2026.10.8@sha256:b720f506c21a6bf5f733a3b1cd04361617ac461a597e44f513aa3976dcd71e57 AS mise
 
 FROM docker.io/library/node:24.21.0-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66
 
@@ -12,8 +13,6 @@ ARG CLAUDE_CODE_VERSION=2.1.296
 ARG CODEX_VERSION=0.162.1
 # renovate: datasource=npm depName=mongosh
 ARG MONGOSH_VERSION=2.13.0
-# renovate: datasource=github-releases depName=jdx/mise
-ARG MISE_VERSION=v2026.10.8
 
 ENV LANG=C.UTF-8 \
     TZ=Europe/Warsaw \
@@ -39,7 +38,7 @@ RUN npm install --global --no-fund --no-audit \
         "mongosh@${MONGOSH_VERSION}" \
     && npm cache clean --force
 
-RUN curl -fsSL https://mise.run | MISE_VERSION="${MISE_VERSION}" MISE_INSTALL_PATH=/usr/local/bin/mise sh
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
 
 COPY mise.toml /etc/mise/config.toml
 # The token lifts mise's GitHub API rate limit; it is not stored in the image.
